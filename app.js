@@ -1,9 +1,34 @@
-const express = require('express');
+const express = require("express");
+const client = require("prom-client");
+
 const app = express();
 const port = 3000;
 
-app.get('/', (req, res) => {
-  res.send('🚀 Hello from Node.js app deployed on Kubernetes cluster!');
+// 🔹 Création du registre
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+// 🔹 Compteur HTTP
+const httpRequestCounter = new client.Counter({
+  name: "http_requests_total",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "route", "status"],
+});
+
+register.registerMetric(httpRequestCounter);
+
+// 🔹 Route principale
+app.get("/", (req, res) => {
+  httpRequestCounter.inc({ method: "GET", route: "/", status: 200 });
+  res.send(
+    "🚀 Hello from Node.js app deployed on Kubernetes cluster! with monitoring",
+  );
+});
+
+// 🔹 Route metrics (IMPORTANT)
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
 });
 
 app.listen(port, () => {
