@@ -30,7 +30,15 @@ app.get("/metrics", async (req, res) => {
   res.set("Content-Type", register.contentType);
   res.end(await register.metrics());
 });
+app.post("/login", (req, res) => {
+  httpRequestCounter.inc({
+    method: "POST",
+    route: "/login",
+    status: 200,
+  });
 
+  res.send("Login successful");
+});
 app.listen(port, () => {
   console.log(`App running on port ${port}`);
 });
